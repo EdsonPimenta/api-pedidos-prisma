@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum ProdutoTipo {
+  ELETRONICO
+  PERECIVEL
+}
+
+model Pedido {
+  id        Int      @id @default(autoincrement())
+  data      DateTime @default(now())
+  valorTotal Decimal @db.Decimal(10, 2)
+  itens     Item[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Item {
+  codigoItem Int      @id @default(autoincrement())
+  qtde       Int
+  valorItem  Decimal  @db.Decimal(10, 2)
+
+  pedidoId Int
+  pedido   Pedido @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+
+  produtoId Int
+  produto   Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@index([pedidoId])
+  @@index([produtoId])
+}
+
+model Produto {
+  id      Int         @id @default(autoincrement())
+  nome    String      @db.VarChar(120)
+  preco   Decimal     @db.Decimal(10, 2)
+  estoque Int
+  tipo    ProdutoTipo
+
+  itens       Item[]
+  eletronico  ProdutoEletronico?
+  perecivel   ProdutoPerecivel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ProdutoEletronico {
+  produtoId Int    @id
+  voltagem  String @db.VarChar(20)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+}
+
+model ProdutoPerecivel {
+  produtoId     Int      @id
+  dataValidade  DateTime
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+}
